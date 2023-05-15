@@ -1,0 +1,33 @@
+name: Deploy Website
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '**.html'
+      - '**.css'
+      - '**.js'
+      - '**.png'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Check if favicon needs update
+        id: check_changes
+        run: |
+          echo "::set-output name=changes::$(md5sum pfp.jpg)"
+      - name: Generate favicon (if input image has changed)
+        run: |
+          if [ "$INPUT_IMAGE_HASH" != "${{ steps.check_changes.outputs.changes }}" ]; then
+            python3 favicon.py pfp.jpg
+            git add favicon.ico
+            git commit -m "Update favicon"
+          fi
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          branch: gh-pages
+          folder: ./
